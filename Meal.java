@@ -1,9 +1,13 @@
 package dev.lpa.burguer;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Meal {
     //Attributes for Meal class
+
     private double price = 5.0;
-    private Item burguer;
+    private Burguer burguer;
     private Item drink;
     private Item side;
 
@@ -15,14 +19,14 @@ public class Meal {
 
     public Meal(double conversionRate) {
         this.conversionRate = conversionRate;
-        burguer = new Item("regular", "burguer");
+        burguer = new Burguer("regular");
         drink = new Item("coke", "drink", 1.5);
         System.out.println(drink.name);
         side = new Item("fries", "side", 2.0);
     }
 
     public double getTotal(){
-        double total = burguer.price + drink.price + side.price;
+        double total = burguer.getPrice() + drink.price + side.price;
         return Item.getPrice(total, conversionRate);
     }
 
@@ -30,6 +34,10 @@ public class Meal {
     public String toString() {
         return "%s%n%s%n%s%n%26s$%.2f".formatted(burguer, drink, side
         , "Total Due: ", getTotal());
+    }
+
+    public void addToppings(String... selectedToppings) {
+        burguer.addToppings(selectedToppings);
     }
 
     private class Item {
@@ -54,6 +62,54 @@ public class Meal {
         }
         private static double getPrice(double price, double rate) {
             return price * rate;
+        }
+    }
+
+    private class Burguer extends Item {
+
+        private enum Extra {AVOCADO, BACON, CHEESE, KETCHUP, MAYO, MUSTARD, PICKLES;
+
+            private double getPrice(){
+                return switch (this) {
+                    case AVOCADO -> 1.0;
+                    case BACON, CHEESE -> 1.5;
+                    default -> 0;
+                };
+            }
+        }
+        private List<Item> toppings = new ArrayList<>();
+        Burguer(String name) {
+            super(name, "burguer", 5.0);
+        }
+
+        public double getPrice(){
+            double total = super.price;
+            for (Item topping : toppings) {
+                total += topping.price;
+            }
+            return total;
+        }
+
+        private void addToppings(String... selectedToppings){
+            for (String selectedTopping : selectedToppings){
+                try {
+                    Extra topping = Extra.valueOf(selectedTopping.toUpperCase());
+                    toppings.add(new Item(topping.name(),
+                            "TOPPING", topping.getPrice()));
+                } catch(IllegalArgumentException e){
+                    System.out.println("No topping found for " + selectedTopping);
+                }
+            }
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder itemized = new StringBuilder(super.toString());
+            for (Item topping : toppings) {
+                itemized.append("\n");
+                itemized.append(topping);
+            }
+            return itemized.toString();
         }
     }
 }
